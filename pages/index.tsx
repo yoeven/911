@@ -10,6 +10,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import AudioVisualizer from "@/components/AudioVisualizer";
 import { z } from "zod";
 import MapCard from "@/components/MapCard";
+// import { createAnthropic } from "@ai-sdk/anthropic";
 
 const jigsaw = JigsawStack({
   apiKey: process.env.NEXT_PUBLIC_JIGSAWSTACK_API_KEY,
@@ -21,6 +22,9 @@ const groq = createGroq({
 const openai = createOpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 });
+// const anthropic = createAnthropic({
+//   apiKey: process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY,
+// });
 
 export default function Home() {
   const systemPrompt = `Current ISO datetime: ${new Date().toISOString()}. You're the police operator for the 911 system. You're responsible for taking calls from the public and managing the situation. Your goal is to help the caller, decide to dispatch the police or not. You have to try your best to calm the caller down and get them to tell you what's going on. Get as much information as possible from the caller, and then decide if you need to dispatch the police or not. Make sure to stay on the line with the caller until the police arrive. Get as much info as possible from the caller. Ask one question at a time, only respond with short quick responses that's fast to speak out. Max 2 sentences at a time. Spell out 911 when you need to say it.`;
@@ -48,6 +52,9 @@ export default function Home() {
     overview: string;
     images: string[];
   } | null>(null);
+  const [generalResearch, setGeneralResearch] = useState<{
+    overview: string;
+  } | null>(null);
 
   useEffect(() => {
     audioSpeaker.current = new Audio();
@@ -69,6 +76,9 @@ export default function Home() {
   }, [messages?.length]);
 
   const handleCall = async () => {
+    if (messages.length > 0) {
+      window.location.reload();
+    }
     setOnCall(true);
     vad.current = await MicVAD.new({
       onSpeechEnd: onSpeechEnd,
@@ -81,7 +91,9 @@ export default function Home() {
       },
       // minSpeechFrames: 5,
       // model: "v5",
-      // positiveSpeechThreshold: 0.75,
+      positiveSpeechThreshold: 0.75,
+      negativeSpeechThreshold: 0.5,
+      redemptionFrames: 10,
     });
     vad.current?.start();
   };
@@ -115,7 +127,7 @@ export default function Home() {
       }),
       generateObject({
         model: openai("gpt-4o"),
-        prompt: `Decide the relevant services to use based on the content of the conversation. Return the params of the tool in a JSON format, if the tool is not suppose to be used, return null. Message content: ${lastMessage.content}`,
+        prompt: `Decide the relevant services to use based on the content of the conversation. Return the params of the tool in a JSON format, if the tool is not suppose to be used, return null for the params. Message content: ${lastMessage.content}`,
         schema: z.object({
           "geo-location-search": z
             .object({
@@ -129,15 +141,22 @@ export default function Home() {
               should_use: z.boolean(),
             })
             .describe("Search the web for a given person, when a person is mentioned"),
+          "general-web-search": z
+            .object({
+              query: z.string().nullable(),
+              should_use: z.boolean(),
+            })
+            .describe("Search about a event, activities or area"),
         }),
       }),
     ]);
+
     const toolResp = toolResponse.object;
 
     console.log("toolResp", toolResp);
 
-    const [geoLocationSearch, humanWebSearch] = await Promise.all([
-      toolResp["geo-location-search"]?.should_use && toolResp["geo-location-search"]?.query
+    const [geoLocationSearch, humanWebSearch, generalWebSearch] = await Promise.all([
+      toolResp?.["geo-location-search"]?.should_use && toolResp["geo-location-search"]?.query
         ? fetch("https://places.googleapis.com/v1/places:searchText", {
             headers: {
               "X-Goog-Api-Key": process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY!,
@@ -149,9 +168,14 @@ export default function Home() {
             }),
           }).then((res) => res.json())
         : null,
-      toolResp["human-web-search"].should_use && toolResp["human-web-search"].query
+      toolResp?.["human-web-search"]?.should_use && toolResp["human-web-search"]?.query
         ? jigsaw.web.search({
             query: "Short research on " + toolResp["human-web-search"].query,
+          })
+        : null,
+      toolResp?.["general-web-search"]?.should_use && toolResp["general-web-search"]?.query
+        ? jigsaw.web.search({
+            query: toolResp["general-web-search"].query,
           })
         : null,
     ]);
@@ -173,6 +197,12 @@ export default function Home() {
       setHumanResearch({
         overview: humanWebSearch.ai_overview,
         images: imageUrls,
+      });
+    }
+
+    if (generalWebSearch) {
+      setGeneralResearch({
+        overview: generalWebSearch.ai_overview,
       });
     }
 
@@ -218,7 +248,7 @@ export default function Home() {
 
     const audio = await jigsaw.audio.text_to_speech({
       text: responseText,
-      accent: "en-AU-female-5",
+      accent: "en-US-female-27",
     });
 
     if (messages[messages.length - 1].id !== lastID || isSpeaking) {
@@ -269,6 +299,14 @@ export default function Home() {
             <Heading size={"lg"}>Location</Heading>
             <MapCard latitude={locationSearch.latitude} longitude={locationSearch.longitude} zoom={15} />
             <Text>{locationSearch.address}</Text>
+          </Flex>
+        )}
+        {generalResearch && (
+          <Flex flexDir={"column"} gap={2} maxW={"3xs"}>
+            <Heading size={"lg"}>General Info</Heading>
+            <Text lineClamp={12} fontSize={"sm"}>
+              {generalResearch.overview}
+            </Text>
           </Flex>
         )}
       </Flex>
