@@ -44,6 +44,10 @@ export default function Home() {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [humanResearch, setHumanResearch] = useState<{
+    overview: string;
+    images: string[];
+  } | null>(null);
 
   useEffect(() => {
     audioSpeaker.current = new Audio();
@@ -147,7 +151,7 @@ export default function Home() {
         : null,
       toolResp["human-web-search"].should_use && toolResp["human-web-search"].query
         ? jigsaw.web.search({
-            query: toolResp["human-web-search"].query,
+            query: "Short research on " + toolResp["human-web-search"].query,
           })
         : null,
     ]);
@@ -162,6 +166,14 @@ export default function Home() {
           longitude: geoData.location.longitude,
         });
       }
+    }
+
+    if (humanWebSearch) {
+      const imageUrls = (humanWebSearch as any).image_urls.slice(0, 3);
+      setHumanResearch({
+        overview: humanWebSearch.ai_overview,
+        images: imageUrls,
+      });
     }
 
     // console.log("toolResponse", toolResponse.steps[toolResponse.steps.length - 1].tool_calls);
@@ -238,7 +250,7 @@ export default function Home() {
       <Flex w={"100%"} minH={"3xs"} gap={"3rem"}>
         {summary && (
           <Flex flexDir={"column"} gap={2} maxW={"sm"}>
-            <Heading size={"lg"}>Summary</Heading>
+            <Heading size={"lg"}>Breakdown</Heading>
             <List.Root>
               {summary?.map((point) => (
                 <List.Item key={point}>{point}</List.Item>
@@ -248,13 +260,13 @@ export default function Home() {
         )}
         {lastSentiment && (
           <Flex flexDir={"column"} gap={2} maxW={"sm"}>
-            <Heading size={"lg"}>Last Sentiment</Heading>
+            <Heading size={"lg"}>Sentiment</Heading>
             <Text>{lastSentiment}</Text>
           </Flex>
         )}
         {locationSearch && (
           <Flex flexDir={"column"} gap={2} maxW={"sm"}>
-            <Heading size={"lg"}>Location Search</Heading>
+            <Heading size={"lg"}>Location</Heading>
             <MapCard latitude={locationSearch.latitude} longitude={locationSearch.longitude} zoom={15} />
             <Text>{locationSearch.address}</Text>
           </Flex>
@@ -265,23 +277,33 @@ export default function Home() {
       </IconButton>
       {isSpeaking && <Text>Speaking</Text>}
       {onCall && <AudioVisualizer />}
-      <Flex flexDir={"column"} gap={2} w={"xl"} h={"sm"} overflowY={"auto"}>
-        {[...messages].reverse().map((message, index) => (
-          <Flex key={message.id} flexDir={"column"} gap={2}>
-            <Flex alignItems={"center"} gap={2}>
-              <Text fontSize={"sm"}>{message.role}</Text>
-              {message?.sentiment && <Text fontSize={"sm"}>{`(${message.sentiment})`}</Text>}
+      <Flex w={"100%"} justifyContent={"space-around"}>
+        <Flex flexDir={"column"} gap={2} w={"xl"} h={"sm"} overflowY={"auto"}>
+          {[...messages].reverse().map((message, index) => (
+            <Flex key={message.id} flexDir={"column"} gap={2}>
+              <Flex alignItems={"center"} gap={2}>
+                <Text fontSize={"sm"}>{message.role}</Text>
+                {message?.sentiment && <Text fontSize={"sm"}>{`(${message.sentiment})`}</Text>}
+              </Flex>
+              <Flex gap={2}>
+                <Box asChild h={"2.5rem"}>
+                  <audio src={URL.createObjectURL(new Blob([message.buffer], { type: "audio/wav" }))} controls />
+                </Box>
+                <Text fontSize={"xs"} maxW={"3xs"}>
+                  {message.content}
+                </Text>
+              </Flex>
             </Flex>
-            <Flex gap={2}>
-              <Box asChild h={"2.5rem"}>
-                <audio src={URL.createObjectURL(new Blob([message.buffer], { type: "audio/wav" }))} controls />
-              </Box>
-              <Text fontSize={"xs"} maxW={"3xs"}>
-                {message.content}
-              </Text>
-            </Flex>
+          ))}
+        </Flex>
+        {humanResearch && (
+          <Flex flexDir={"column"} gap={2} maxW={"sm"}>
+            <Heading size={"lg"}>Human Research</Heading>
+            <Text lineClamp={10} fontSize={"sm"}>
+              {humanResearch.overview}
+            </Text>
           </Flex>
-        ))}
+        )}
       </Flex>
     </Flex>
   );
