@@ -260,7 +260,7 @@ export default function Home() {
           </Flex>
         )}
       </Flex>
-      <IconButton size={"2xl"} color={onCall ? "tomato" : "green"} onClick={onCall ? handleEndCall : handleCall}>
+      <IconButton my={"2rem"} size={"2xl"} color={onCall ? "tomato" : "green"} onClick={onCall ? handleEndCall : handleCall}>
         <Phone />
       </IconButton>
       {isSpeaking && <Text>Speaking</Text>}
