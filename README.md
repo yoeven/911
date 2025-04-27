@@ -29,3 +29,9 @@ Demo video: https://drive.google.com/file/d/1unI0GfoLh9FQroPpxGrnGsiFzNFQK7QC/vi
 2. Add .env keys
 3. Run `yarn`
 4. Run `yarn dev`
+
+Research references:
+
+- https://thecurrentga.org/2023/09/20/911-call-takers-are-demoralized-overwhelmed-and-dealing-with-their-own-mental-health-woes/
+- https://www.npr.org/2024/04/05/1242310330/911-call-takers-police-alternative
+- https://abcnews.go.com/US/difference-life-death-inside-staffing-crisis-911-dispatch/story?id=101082803
