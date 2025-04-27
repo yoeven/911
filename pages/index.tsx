@@ -275,6 +275,7 @@ export default function Home() {
       <IconButton my={"2rem"} size={"2xl"} color={onCall ? "tomato" : "green"} onClick={onCall ? handleEndCall : handleCall}>
         <Phone />
       </IconButton>
+      {!onCall && <Text>Press the button to start the call and just talk to the operator</Text>}
       {isSpeaking && <Text>Speaking</Text>}
       {onCall && <AudioVisualizer />}
       <Flex w={"100%"} justifyContent={"space-around"}>
