@@ -7,6 +7,14 @@ The goal of this project is to build a speech-to-speech AI operator dashboard fo
 Usable demo: https://911-liart.vercel.app
 Demo video: https://drive.google.com/file/d/1unI0GfoLh9FQroPpxGrnGsiFzNFQK7QC/view?usp=sharing
 
+# Goals we tried to achieve
+
+- Solve the man power problem on the dispatch center.
+- Solve human error on high pressure situations.
+- Maintain evidence and data for the police report.
+- Make each component replaceable or with a local alternative. So we aren't locked into using one service provider.
+- Make the dashboard generative and dynamic. Allowing the operator to ask follow up questions.
+
 # Tech Used
 
 - NextJS
