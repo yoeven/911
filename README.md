@@ -1,5 +1,7 @@
 # 911 AI Operator Dashboard
 
+![911 AI Operator Dashboard](./dashboard_example.png)
+
 The goal of this project is to build a speech-to-speech AI operator dashboard for the 911 system. As the user speaks and provides more information, AI operator builds a detailed overview and dashboard of this situation. Making it easier to track evidence and make decisions.
 
 Usable demo: https://911-liart.vercel.app
